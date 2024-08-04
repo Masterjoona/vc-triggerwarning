@@ -5,6 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Embed } from "discord-types/general";
 
@@ -51,10 +52,7 @@ type EmbedLink = Embed & { link: string, TWReason?: string };
 
 export default definePlugin({
     name: "TriggerWarning",
-    authors: [{
-        name: "Joona",
-        id: 297410829589020673n
-    }],
+    authors: [Devs.Joona],
     description: "Spoiler attachments/embeds based on filenames and links.",
     patches: [
         {
@@ -93,7 +91,7 @@ export default definePlugin({
                 },
                 {
                     match: /\i\.\i\.Messages\.SPOILER(?<==(\i).{1,100})/,
-                    replace: "($1.TWReason && 'Trigger: ' + $1.TWReason) || $&"
+                    replace: "($1.TWReason && 'TW: ' + $1.TWReason) || $&"
                 },
                 {
                     match:/,{reason:\i/g,
