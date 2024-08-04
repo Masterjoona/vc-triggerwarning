@@ -6,6 +6,7 @@
 
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
+import { Embed } from "discord-types/general";
 
 const settings = definePluginSettings({
     spoilerWords: {
@@ -30,6 +31,24 @@ const settings = definePluginSettings({
     },
 });
 
+interface Attachment {
+	id: string;
+	filename: string;
+	size: number;
+	url: string;
+	proxy_url: string;
+	width: number;
+	height: number;
+	content_type: string;
+	placeholder: string;
+	placeholder_version: number;
+	spoiler: boolean;
+    TWReason?: string;
+}
+
+type EmbedLink = Embed & { link: string, TWReason?: string };
+
+
 export default definePlugin({
     name: "TriggerWarning",
     authors: [{
@@ -43,11 +62,11 @@ export default definePlugin({
             replacement: [
                 {
                     match: /function \i\((\i),\i\){return(?<=VOICE_MESSAGE.{20,27})/,
-                    replace: "$& $self.shouldSpoilerFile($1.originalItem.filename) || "
+                    replace: "$& $self.shouldSpoilerFile($1.originalItem) || "
                 },
                 {
                     match: /(\i)=\(0,\i.{10,20};(?=if\((\i).type)/,
-                    replace: "$&$1=$self.shouldSpoilerLink($1,$2.url,$2.type);"
+                    replace: "$&$1=$self.shouldSpoilerLink($1,$2);"
                 }
             ]
         },
@@ -57,27 +76,64 @@ export default definePlugin({
                 match: /function \i\((\i),\i\){/,
                 replace: "$&$1.content=$self.shouldSpoilerWords($1.content);"
             }
+        },
+        {
+            find: ".nonMediaMosaicItem]",
+            replacement: {
+                match: /.Types.ATTACHMENT,/,
+                replace: "$&TWReason:arguments[0].message.attachments[0].TWReason,"
+            }
+        },
+        {
+            find: '.ATTACHMENT="attachment",',
+            replacement: [
+                {
+                    match: /\i,{className:\i(?<=!1}=(\i);switch.{1,150})/,
+                    replace: "$&,TWReason:$1.TWReason,"
+                },
+                {
+                    match: /\i\.\i\.Messages\.SPOILER(?<==(\i).{1,100})/,
+                    replace: "($1.TWReason && 'Trigger: ' + $1.TWReason) || $&"
+                },
+                {
+                    match:/,{reason:\i/g,
+                    replace: "$&,TWReason:this.props.TWReason"
+                }
+            ]
+        },
+        {
+            find: "this.renderInlineMediaEmbed",
+            replacement: {
+                match: /.Types.EMBED,/,
+                replace: "$&TWReason:this.props.embed.TWReason,"
+            }
         }
     ],
     settings,
-    shouldSpoilerFile(filename: string): string | null {
+    shouldSpoilerFile(attachment: Attachment): string | null {
         const { spoilerFilenames } = settings.store;
+        const filename = attachment.filename;
         if (!filename || !spoilerFilenames) return null;
         const strings = spoilerFilenames.split(",").map(s => s.trim());
-        return strings.some(s => filename.includes(s)) ? "spoiler" : null;
+        const badWord = strings.find(s => filename.includes(s));
+        attachment.TWReason = badWord;
+        return badWord ? "spoiler" : null;
     },
-    shouldSpoilerLink(alreadySpoilered: string, link: string, type: string): string | null {
+    shouldSpoilerLink(alreadySpoilered: string, embed: EmbedLink): string | null {
+        const { url, type } = embed;
         if (alreadySpoilered) return alreadySpoilered;
         const { spoilerLinks, gifSpoilersOnly } = settings.store;
-        if (!link || !spoilerLinks) return null;
+        if (!url || !spoilerLinks) return null;
 
         const strings = spoilerLinks.split(",").map(s => s.trim());
-        const isLinkSpoiler = strings.some(s => link.includes(s));
+        const badWord = strings.find(s => url.includes(s));
 
         if (gifSpoilersOnly) {
-            return type === "gifv" && isLinkSpoiler ? "spoiler" : null;
+            embed.TWReason = badWord;
+            return type === "gifv" && badWord ? "spoiler" : null;
         } else {
-            return isLinkSpoiler ? "spoiler" : null;
+            embed.TWReason = badWord;
+            return badWord ? "spoiler" : null;
         }
     },
     shouldSpoilerWords(content: string): string {
