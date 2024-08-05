@@ -32,12 +32,12 @@ const settings = definePluginSettings({
         default: true
     },
     ignoredChannels: {
-        description: "Channels to ignore the trigger warning in.",
+        description: "Channel ids to ignore the trigger warning in.",
         type: OptionType.STRING,
         default: ""
     },
     ignoredGuilds: {
-        description: "Guilds to ignore the trigger warning in.",
+        description: "Guild ids to ignore the trigger warning in.",
         type: OptionType.STRING,
         default: ""
     }
