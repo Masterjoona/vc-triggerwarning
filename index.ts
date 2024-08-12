@@ -32,12 +32,12 @@ const settings = definePluginSettings({
         default: true
     },
     ignoredChannels: {
-        description: "Channel ids to ignore the trigger warning in.",
+        description: "Channel ids to ignore",
         type: OptionType.STRING,
         default: ""
     },
     ignoredGuilds: {
-        description: "Guild ids to ignore the trigger warning in.",
+        description: "Server ids to ignore",
         type: OptionType.STRING,
         default: ""
     }
@@ -74,8 +74,8 @@ export default definePlugin({
                     replace: "$& $self.shouldSpoilerFile($1.originalItem,$2) || "
                 },
                 {
-                    match: /(\i)=\(0,\i.{10,20};(?=if\((\i).type)/,
-                    replace: "$&$1=$self.shouldSpoilerLink($1,$2,this.props.channel);"
+                    match: /GIFT\)return null;(?=.{1,150}obscureReason:.{1,10}(\i):)/,
+                    replace: "$&$1=$self.shouldSpoilerLink($1,arguments[0],this.props.channel);"
                 }
             ]
         },
@@ -87,10 +87,10 @@ export default definePlugin({
             }
         },
         {
-            find: ".nonMediaMosaicItem]",
+            find: ".removeMosaicItemHoverButton),",
             replacement: {
                 match: /.Types.ATTACHMENT,/,
-                replace: "$&TWReason:arguments[0].message.attachments[0].TWReason,"
+                replace: "$&TWReason:arguments[0].item.originalItem.TWReason,"
             }
         },
         {
