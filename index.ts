@@ -7,8 +7,8 @@
 import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { Embed, Channel } from "discord-types/general";
 import { ChannelStore } from "@webpack/common";
+import { Channel, Embed } from "discord-types/general";
 
 const settings = definePluginSettings({
     spoilerWords: {
@@ -74,8 +74,8 @@ export default definePlugin({
                     replace: "$& $self.shouldSpoilerFile($1.originalItem,$2) || "
                 },
                 {
-                    match: /GIFT\)return null;(?=.{1,150}obscureReason:.{1,10}(\i):)/,
-                    replace: "$&$1=$self.shouldSpoilerLink($1,arguments[0],this.props.channel);"
+                    match: /(?=if\((\i)\.type.{1,20}GIFT)(?=.+?obscureReason:null!=(\i))/,
+                    replace: "$2=$self.shouldSpoilerLink($2,$1);"
                 }
             ]
         },
@@ -121,7 +121,7 @@ export default definePlugin({
     settings,
     shouldSpoilerFile(attachment: Attachment, channel: Channel): string | null {
         const { spoilerFilenames } = settings.store;
-        const filename = attachment.filename;
+        const { filename } = attachment;
         if (!filename || !spoilerFilenames) return null;
         if (settings.store.ignoredGuilds.includes(channel.guild_id)) return null;
         if (settings.store.ignoredChannels.includes(channel.id)) return null;
