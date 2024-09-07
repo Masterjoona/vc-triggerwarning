@@ -74,8 +74,8 @@ export default definePlugin({
                     replace: "$& $self.shouldSpoilerFile($1.originalItem,$2) || "
                 },
                 {
-                    match: /(?=if\((\i)\.type.{1,20}GIFT)(?=.+?obscureReason:null!=(\i))/,
-                    replace: "$2=$self.shouldSpoilerLink($2,$1);"
+                    match: /GIFT\)return null;(?=.{1,150}obscureReason:.{1,10}(\i):)/,
+                    replace: "$&$1=$self.shouldSpoilerLink($1,arguments[0],this.props.channel);"
                 }
             ]
         },
@@ -135,8 +135,8 @@ export default definePlugin({
         if (alreadySpoilered) return alreadySpoilered;
         const { spoilerLinks, gifSpoilersOnly } = settings.store;
         if (!url || !spoilerLinks) return null;
-        if (settings.store.ignoredGuilds.includes(channel.guild_id)) return null;
-        if (settings.store.ignoredChannels.includes(channel.id)) return null;
+        if (settings.store.ignoredGuilds.includes(channel?.guild_id)) return null;
+        if (settings.store.ignoredChannels.includes(channel?.id)) return null;
 
         const strings = spoilerLinks.split(",").map(s => s.trim());
         const badWord = strings.find(s => url.includes(s));
