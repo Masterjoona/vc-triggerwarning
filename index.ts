@@ -7,7 +7,7 @@
 import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { ChannelStore } from "@webpack/common";
+import { ChannelStore, FluxDispatcher } from "@webpack/common";
 import { Channel, Embed } from "discord-types/general";
 
 const settings = definePluginSettings({
@@ -78,13 +78,6 @@ export default definePlugin({
                     replace: "$&$1=$self.shouldSpoilerLink($1,arguments[0],this.props.channel);"
                 }
             ]
-        },
-        {
-            find: ".Messages.MESSAGE_UNSUPPORTED,",
-            replacement: {
-                match: /function \i\((\i),\i\){/,
-                replace: "$&$1.content=$self.shouldSpoilerWords($1.content, $1.channel_id);"
-            }
         },
         {
             find: ".removeMosaicItemHoverButton),",
@@ -158,13 +151,16 @@ export default definePlugin({
         const strings = spoilerWords.split(",").map(s => s.trim());
 
         return strings.reduce((acc, s) => {
-            const spoilerRegex = new RegExp(`\\|\\|${s}\\|\\|`, "gi");
-            if (spoilerRegex.test(acc)) {
-                return acc;
-            }
             const wordRegex = new RegExp(`\\b${s}\\b`, "gi");
             return acc.replace(wordRegex, `||${s}||`);
         }, content);
+    },
+    start() {
+        // @ts-ignore
+        FluxDispatcher.addInterceptor(e => {
+            if (e.type === "MESSAGE_CREATE") {
+                e.message.content = this.shouldSpoilerWords(e.message.content, e.message.channel_id);
+            }
+        });
     }
-
 });
