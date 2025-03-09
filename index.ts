@@ -70,12 +70,16 @@ export default definePlugin({
             find: ".renderSuppressConfirmModal()",
             replacement: [
                 {
-                    match: /function \i\((\i),\i\){return(?<=VOICE_MESSAGE.{20,27})(?<=(\i)\.guild_id,.{1,145})/,
-                    replace: "$& $self.shouldSpoilerFile($1.originalItem,$2) || "
+                    match: /renderAttachments\(\i\).+?;/,
+                    replace: "$&const TWChannelBruh=this.props.channel;"
                 },
                 {
-                    match: /GIFT\)return null;(?=.{1,150}obscureReason:.{1,10}(\i):)/,
-                    replace: "$&$1=$self.shouldSpoilerLink($1,arguments[0],this.props.channel);"
+                    match: /\((\i\.originalItem),\i\)/,
+                    replace: "$&||$self.shouldSpoilerFile($1,TWChannelBruh)"
+                },
+                {
+                    match: /GIFT\)return null;(?=.{1,150}obscureReason:.{1,10}(\i):)(?<="renderEmbed",\((\i).+?)/,
+                    replace: "$&$1=$self.shouldSpoilerLink($1,$2,this.props.channel);"
                 }
             ]
         },
@@ -87,15 +91,15 @@ export default definePlugin({
             }
         },
         {
-            find: '.ATTACHMENT="attachment",',
+            find: ".constrainedObscureContent]",
             replacement: [
                 {
                     match: /\i,{className:\i(?<=!1}=(\i);switch.{1,150})/,
                     replace: "$&,TWReason:$1.TWReason,"
                 },
                 {
-                    match: /\i\.\i\.Messages\.SPOILER(?<==(\i).{1,100})/,
-                    replace: "($1.TWReason && 'TW: ' + $1.TWReason) || $&"
+                    match: /spoilerWarning,\i\),children:(?<==(\i).+?)/,
+                    replace: "$&($1.TWReason && 'TW: ' + $1.TWReason) ||"
                 },
                 {
                     match: /,{reason:\i/g,
@@ -123,7 +127,7 @@ export default definePlugin({
         attachment.TWReason = badWord;
         return badWord ? "spoiler" : null;
     },
-    shouldSpoilerLink(alreadySpoilered: string, embed: EmbedLink, channel: Channel): string | null {
+    shouldSpoilerLink(alreadySpoilered: string | null, embed: EmbedLink, channel: Channel): string | null {
         const { url, type } = embed;
         if (alreadySpoilered) return alreadySpoilered;
         const { spoilerLinks, gifSpoilersOnly } = settings.store;
